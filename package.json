@@ -9,11 +9,8 @@
   "keywords": [
     "wikidata"
   ],
-  "author": "maxlath",
-  "license": "beerware",
+  "author": "dbrant",
   "dependencies": {
-    "coffee-script": "^1.7.1",
-    "colors": "^0.6.2",
     "q": "^1.1.2",
     "qreq": "^0.2.0"
   }

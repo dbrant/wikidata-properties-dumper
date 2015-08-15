@@ -1,0 +1,7 @@
+Dockerfile
+coverage
+node_modules
+npm-debug.log
+.DS_Store
+/.idea/
+*.iml
