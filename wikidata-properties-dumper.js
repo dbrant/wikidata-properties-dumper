@@ -44,7 +44,7 @@ var parseWikidataResponses = function () {
                     _results.push(missing.push(entity.id));
                 } else {
                     if ((entity.labels != null) && (((_ref2 = entity.labels) != null ? _ref2[language] : void 0) != null)) {
-                        _results.push(result[entity.labels[language].value.replace(/ |-|\//g, '_').replace(/\(|\)|,|\.|,|'|"/g, '')] = id.replace(/P/g, ''));
+                        _results.push(result[entity.labels[language].value.replace(/ |-|–|\//g, '_').replace(/\(|\)|,|&|:|\.|,|'|"/g, '')] = id.replace(/P/g, ''));
                     } else {
                         enProp = (_ref3 = entity.labels) != null ? _ref3.en.value : void 0;
                         if (enProp != null) {
