@@ -4,10 +4,8 @@
 var _ref = process.argv.slice(2);
 var language = _ref[0];
 var total = _ref[1];
-var offset = _ref[2];
-total || (total = 3000);
+total || (total = 2800);
 var limit = 50;
-offset || (offset = 0);
 var Q = require('q');
 var qreq = require('qreq');
 var fs = require('fs');
@@ -25,11 +23,9 @@ var dumpProperties = function () {
 };
 
 var parseWikidataResponses = function () {
-    var args, missing, missingLang, result;
+    var args, result, pVal;
     args = 1 <= arguments.length ? [].slice.call(arguments, 0) : [];
-    result = {};
-    missing = [];
-    missingLang = [];
+    result = [];
     args.forEach(function (resp) {
         var enProp, entity, id, _ref1, _ref2, _ref3, _results;
         if (resp.body.warning != null) {
@@ -39,33 +35,37 @@ var parseWikidataResponses = function () {
             _ref1 = resp.body.entities;
             _results = [];
             for (id in _ref1) {
+                pVal = parseInt(id.replace(/P/g, ''));
                 entity = _ref1[id];
                 if (id[0] === '-') {
-                    _results.push(missing.push(entity.id));
+                    result[pVal] = entity.id;
+                    console.log(">>> missing: " + entity.id);
                 } else {
                     if ((entity.labels != null) && (((_ref2 = entity.labels) != null ? _ref2[language] : void 0) != null)) {
-                        _results.push(result[entity.labels[language].value.replace(/ |-|�|\//g, '_').replace(/\(|\)|,|&|:|\.|,|'|"/g, '')] = id.replace(/P/g, ''));
+                        //_results.push(result[entity.labels[language].value.replace(/ |-|–|\//g, '_').replace(/\(|\)|,|&|:|\.|,|'|"/g, '')] = id.replace(/P/g, ''));
+                        //_results.push(result[entity.labels[language].value] = id.replace(/P/g, ''));
+                        result[pVal] = entity.labels[language].value;
                     } else {
                         enProp = (_ref3 = entity.labels) != null ? _ref3.en.value : void 0;
                         if (enProp != null) {
-                            missingLang.push([entity.id, enProp]);
-                            _results.push(result[id] = enProp);
+                            result[pVal] = enProp;
                         } else {
-                            _results.push(missing.push(entity.id));
+                            result[pVal] = entity.id;
                         }
                     }
                 }
             }
+            _results.push(result);
             return _results;
         }
     });
-    return [result, missing, missingLang];
+    return [result];
 };
 
 var buildBatchRequests = function () {
     var from, requests, to, _results;
     requests = [];
-    from = 1 + offset;
+    from = 1;
     to = Math.ceil(total / limit);
     (function () {
         _results = [];
@@ -110,34 +110,51 @@ var wikidataGetEntities = function (ids, props, format) {
 };
 
 var writeOutputs = function (outputs) {
-    var missing, missingLang, result;
-    result = outputs[0];
-    missing = outputs[1];
-    missingLang = outputs[2];
-    writeProps(result, missing);
-    return writeMissingLangProp(missingLang);
+    var result = outputs[0];
+    writeProps(result);
 };
 
-var writeProps = function (result, missing) {
+var writeProps = function (result) {
     var json;
     json = JSON.stringify({
-        properties: result,
-        missing: missing
+        properties: result
     }, null, 4);
-    if (offset > 0) {
-        return fs.writeFileSync("./properties-" + language + "-" + from + "-" + to + ".json", json);
-    } else {
-        return fs.writeFileSync("./outputs/properties-" + language + ".json", json);
-    }
+
+    writeJava(result);
+    return fs.writeFileSync("./outputs/properties-" + language + ".json", json);
 };
 
-var writeMissingLangProp = function (missingLang) {
-    var jsonLang;
-    jsonLang = JSON.stringify({
-        language: language,
-        missing: missingLang
-    }, null, 4);
-    fs.writeFileSync("./outputs/missingLangProp-" + language + ".json", jsonLang);
+var writeJava = function (result) {
+    var text, i;
+    text = "public final class Properties {\n";
+    for (i = 0; i < result.length; i++) {
+        if (result[i] === undefined || result[i] === null) {
+            continue;
+        }
+        text += "    public static final int ";
+        text += result[i].toUpperCase().replace(/ |-|–|\//g, '_').replace(/\(|\)|,|&|:|\.|,|'|"/g, '');
+        text += " = ";
+        text += i;
+        text += ";\n"
+    }
+    text += "}";
+    fs.writeFileSync("./outputs/Properties.java", text);
+
+    text = "public final class PropertyNames {\n";
+    text += "    public static final String[] NAMES = {\n";
+    for (i = 0; i < result.length; i++) {
+        text += '        "';
+        if (result[i] !== undefined && result[i] !== null) {
+            text += result[i];
+        }
+        text += '"';
+        if (i < result.length - 1) {
+            text += ","
+        }
+        text += "\n"
+    }
+    text += "    };\n}";
+    fs.writeFileSync("./outputs/PropertyNames.java", text);
 };
 
 dumpProperties();
