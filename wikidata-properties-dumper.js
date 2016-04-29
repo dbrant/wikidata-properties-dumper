@@ -3,6 +3,7 @@
 
 var _ref = process.argv.slice(2);
 var language = _ref[0];
+language || (language = 'en');
 var total = _ref[1];
 total || (total = 2800);
 var limit = 50;
@@ -121,18 +122,19 @@ var writeProps = function (result) {
     }, null, 4);
 
     writeJava(result);
-    return fs.writeFileSync("./outputs/properties-" + language + ".json", json);
+    return fs.writeFileSync("./outputs/properties.json", json);
 };
 
 var writeJava = function (result) {
     var text, i;
-    text = "public final class Properties {\n";
+    text = "package foo;\n\n";
+    text += "public final class Properties {\n";
     for (i = 0; i < result.length; i++) {
         if (result[i] === undefined || result[i] === null) {
             continue;
         }
         text += "    public static final int ";
-        text += result[i].toUpperCase().replace(/ |-|–|\//g, '_').replace(/\(|\)|,|&|:|\.|,|'|"/g, '');
+        text += result[i].toUpperCase().replace(/ |-|–|\//g, '_').replace(/\(|\)|,|&|:|\.|,|'|"/g, '').replace(/\+/g, 'PLUS');
         text += " = ";
         text += i;
         text += ";\n"
@@ -140,12 +142,13 @@ var writeJava = function (result) {
     text += "}";
     fs.writeFileSync("./outputs/Properties.java", text);
 
-    text = "public final class PropertyNames {\n";
+    text = "package foo;\n\n";
+    text += "public final class PropertyNames {\n";
     text += "    public static final String[] NAMES = {\n";
     for (i = 0; i < result.length; i++) {
         text += '        "';
         if (result[i] !== undefined && result[i] !== null) {
-            text += result[i];
+            text += result[i].replace(/"/g, '\\"');
         }
         text += '"';
         if (i < result.length - 1) {
