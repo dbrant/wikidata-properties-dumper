@@ -5,7 +5,7 @@ var _ref = process.argv.slice(2);
 var language = _ref[0];
 language || (language = 'en');
 var total = _ref[1];
-total || (total = 2800);
+total || (total = 3000);
 var limit = 50;
 var Q = require('q');
 var qreq = require('qreq');
@@ -47,12 +47,7 @@ var parseWikidataResponses = function () {
                         //_results.push(result[entity.labels[language].value] = id.replace(/P/g, ''));
                         result[pVal] = entity.labels[language].value;
                     } else {
-                        enProp = (_ref3 = entity.labels) != null ? _ref3.en.value : void 0;
-                        if (enProp != null) {
-                            result[pVal] = enProp;
-                        } else {
-                            result[pVal] = entity.id;
-                        }
+                        result[pVal] = entity.id;
                     }
                 }
             }
@@ -128,13 +123,14 @@ var writeProps = function (result) {
 var writeJava = function (result) {
     var text, i;
     text = "package foo;\n\n";
+    text += "@SuppressWarnings(\"all\")\n";
     text += "public final class Properties {\n";
     for (i = 0; i < result.length; i++) {
         if (result[i] === undefined || result[i] === null) {
             continue;
         }
         text += "    public static final int ";
-        text += result[i].toUpperCase().replace(/ |-|–|\//g, '_').replace(/\(|\)|,|&|:|\.|,|'|"/g, '').replace(/\+/g, 'PLUS');
+        text += result[i].toUpperCase().replace(/ |-|–|\//g, '_').replace(/\(|\)|,|&|:|\.|,|'|"/g, '').replace(/\+/g, 'PLUS').replace('É', 'E');
         text += " = ";
         text += i;
         text += ";\n"
@@ -143,6 +139,7 @@ var writeJava = function (result) {
     fs.writeFileSync("./outputs/Properties.java", text);
 
     text = "package foo;\n\n";
+    text += "@SuppressWarnings(\"unused\")\n";
     text += "public final class PropertyNames {\n";
     text += "    public static final String[] NAMES = {\n";
     for (i = 0; i < result.length; i++) {
