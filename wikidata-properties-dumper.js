@@ -5,7 +5,7 @@ var _ref = process.argv.slice(2);
 var language = _ref[0];
 language || (language = 'en');
 var total = _ref[1];
-total || (total = 3000);
+total || (total = 7000);
 var limit = 50;
 var Q = require('q');
 var qreq = require('qreq');
@@ -122,7 +122,7 @@ var writeProps = function (result) {
 
 var writeJava = function (result) {
     var text, i;
-    text = "package foo;\n\n";
+    text = "package org.wikipedia.wikidata;\n\n";
     text += "@SuppressWarnings(\"all\")\n";
     text += "public final class Properties {\n";
     for (i = 0; i < result.length; i++) {
@@ -130,15 +130,21 @@ var writeJava = function (result) {
             continue;
         }
         text += "    public static final int ";
-        text += result[i].toUpperCase().replace(/ |-|–|\//g, '_').replace(/\(|\)|,|&|:|\.|,|'|"/g, '').replace(/\+/g, 'PLUS').replace('É', 'E');
+
+        var name = result[i].toUpperCase().replace(/ |-|–| |\//g, '_').replace(/\(|\)|,|&|:|\.|,|!|\?|`|‘|'|’|"/g, '').replace(/\+/g, 'PLUS').replace('É', 'E').replace('@', 'A');
+        if (name.charAt(0) >= '0' && name.charAt(0) <= 9) {
+            name = "_" + name;
+        }
+
+        text += name;
         text += " = ";
         text += i;
         text += ";\n"
     }
-    text += "}";
+    text += "}\n";
     fs.writeFileSync("./outputs/Properties.java", text);
 
-    text = "package foo;\n\n";
+    text = "package org.wikipedia.wikidata;\n\n";
     text += "@SuppressWarnings(\"unused\")\n";
     text += "public final class PropertyNames {\n";
     text += "    public static final String[] NAMES = {\n";
@@ -153,7 +159,7 @@ var writeJava = function (result) {
         }
         text += "\n"
     }
-    text += "    };\n}";
+    text += "    };\n}\n";
     fs.writeFileSync("./outputs/PropertyNames.java", text);
 };
 
